@@ -51,6 +51,24 @@ export type ActionContextOf<AD extends AnyActorDefinition> =
 		? ActionContext<S, CP, CS, V, I, AD, DB, E>
 		: never;
 
+/**
+ * Extracts the Events type from an ActorDefinition
+ */
+export type ActorEventsOf<AD extends AnyActorDefinition> =
+	AD extends ActorDefinition<
+		any,
+		any,
+		any,
+		any,
+		any,
+		any,
+		any,
+		infer E,
+		any
+	>
+		? E
+		: Record<string, never>;
+
 export class ActorDefinition<
 	S,
 	CP,
