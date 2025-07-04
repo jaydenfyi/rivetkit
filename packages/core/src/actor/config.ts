@@ -99,11 +99,12 @@ export interface OnConnectOptions<CP> {
 // This must have only one or the other or else S will not be able to be inferred
 //
 // Data returned from this handler will be available on `c.state`.
-type CreateState<S, CP, CS, V, I, AD, DB> =
+type CreateState<S, CP, CS, V, I, AD, DB, E> =
 	| { state: S }
 	| {
 			createState: (
 				c: ActorContext<
+					undefined,
 					undefined,
 					undefined,
 					undefined,
@@ -122,11 +123,12 @@ type CreateState<S, CP, CS, V, I, AD, DB> =
 // This must have only one or the other or else S will not be able to be inferred
 //
 // Data returned from this handler will be available on `c.conn.state`.
-type CreateConnState<S, CP, CS, V, I, AD, DB> =
+type CreateConnState<S, CP, CS, V, I, AD, DB, E> =
 	| { connState: CS }
 	| {
 			createConnState: (
 				c: ActorContext<
+					undefined,
 					undefined,
 					undefined,
 					undefined,
@@ -146,7 +148,7 @@ type CreateConnState<S, CP, CS, V, I, AD, DB> =
 /**
  * @experimental
  */
-type CreateVars<S, CP, CS, V, I, AD, DB> =
+type CreateVars<S, CP, CS, V, I, AD, DB, E> =
 	| {
 			/**
 			 * @experimental
@@ -159,6 +161,7 @@ type CreateVars<S, CP, CS, V, I, AD, DB> =
 			 */
 			createVars: (
 				c: ActorContext<
+					undefined,
 					undefined,
 					undefined,
 					undefined,
@@ -206,9 +209,9 @@ type OnAuth<CP, AD> =
 	  }
 	| Record<never, never>;
 
-export interface Actions<S, CP, CS, V, I, AD, DB> {
+export interface Actions<S, CP, CS, V, I, AD, DB, E> {
 	[Action: string]: (
-		c: ActionContext<S, CP, CS, V, I, AD, DB>,
+		c: ActionContext<S, CP, CS, V, I, AD, DB, E>,
 		...args: any[]
 	) => any;
 }
@@ -240,7 +243,8 @@ interface BaseActorConfig<
 	I,
 	AD,
 	DB,
-	R extends Actions<S, CP, CS, V, I, AD, DB>,
+	E,
+	R extends Actions<S, CP, CS, V, I, AD, DB, E>,
 > {
 	/**
 	 * Called when the actor is first initialized.
@@ -249,7 +253,7 @@ interface BaseActorConfig<
 	 * This is called before any other lifecycle hooks.
 	 */
 	onCreate?: (
-		c: ActorContext<S, CP, CS, V, I, AD, DB>,
+		c: ActorContext<S, CP, CS, V, I, AD, DB, E>,
 		opts: OnCreateOptions<I>,
 	) => void | Promise<void>;
 
@@ -261,7 +265,7 @@ interface BaseActorConfig<
 	 *
 	 * @returns Void or a Promise that resolves when startup is complete
 	 */
-	onStart?: (c: ActorContext<S, CP, CS, V, I, AD, DB>) => void | Promise<void>;
+	onStart?: (c: ActorContext<S, CP, CS, V, I, AD, DB, E>) => void | Promise<void>;
 
 	/**
 	 * Called when the actor's state changes.
@@ -272,7 +276,7 @@ interface BaseActorConfig<
 	 * @param newState The updated state
 	 */
 	onStateChange?: (
-		c: ActorContext<S, CP, CS, V, I, AD, DB>,
+		c: ActorContext<S, CP, CS, V, I, AD, DB, E>,
 		newState: S,
 	) => void;
 
@@ -297,7 +301,7 @@ interface BaseActorConfig<
 	 * @throws Throw an error to reject the connection
 	 */
 	onBeforeConnect?: (
-		c: ActorContext<S, CP, CS, V, I, AD, DB>,
+		c: ActorContext<S, CP, CS, V, I, AD, DB, E>,
 		opts: OnConnectOptions<CP>,
 	) => void | Promise<void>;
 
@@ -311,8 +315,8 @@ interface BaseActorConfig<
 	 * @returns Void or a Promise that resolves when connection handling is complete
 	 */
 	onConnect?: (
-		c: ActorContext<S, CP, CS, V, I, AD, DB>,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		c: ActorContext<S, CP, CS, V, I, AD, DB, E>,
+		conn: Conn<S, CP, CS, V, I, AD, DB, E>,
 	) => void | Promise<void>;
 
 	/**
@@ -325,8 +329,8 @@ interface BaseActorConfig<
 	 * @returns Void or a Promise that resolves when disconnect handling is complete
 	 */
 	onDisconnect?: (
-		c: ActorContext<S, CP, CS, V, I, AD, DB>,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		c: ActorContext<S, CP, CS, V, I, AD, DB, E>,
+		conn: Conn<S, CP, CS, V, I, AD, DB, E>,
 	) => void | Promise<void>;
 
 	/**
@@ -342,7 +346,7 @@ interface BaseActorConfig<
 	 * @returns The modified output to send to the client
 	 */
 	onBeforeActionResponse?: <Out>(
-		c: ActorContext<S, CP, CS, V, I, AD, DB>,
+		c: ActorContext<S, CP, CS, V, I, AD, DB, E>,
 		name: string,
 		args: unknown[],
 		output: Out,
@@ -376,7 +380,7 @@ type ActorDatabaseConfig<DB> =
 // 1. Infer schema
 // 2. Omit keys that we'll manually define (because of generics)
 // 3. Define our own types that have generic constraints
-export type ActorConfig<S, CP, CS, V, I, AD, DB> = Omit<
+export type ActorConfig<S, CP, CS, V, I, AD, DB, E> = Omit<
 	z.infer<typeof ActorConfigSchema>,
 	| "actions"
 	| "onAuth"
@@ -395,11 +399,11 @@ export type ActorConfig<S, CP, CS, V, I, AD, DB> = Omit<
 	| "createVars"
 	| "db"
 > &
-	BaseActorConfig<S, CP, CS, V, I, AD, DB, Actions<S, CP, CS, V, I, AD, DB>> &
+	BaseActorConfig<S, CP, CS, V, I, AD, DB, E, Actions<S, CP, CS, V, I, AD, DB, E>> &
 	OnAuth<CP, AD> &
-	CreateState<S, CP, CS, V, I, AD, DB> &
-	CreateConnState<S, CP, CS, V, I, AD, DB> &
-	CreateVars<S, CP, CS, V, I, AD, DB> &
+	CreateState<S, CP, CS, V, I, AD, DB, E> &
+	CreateConnState<S, CP, CS, V, I, AD, DB, E> &
+	CreateVars<S, CP, CS, V, I, AD, DB, E> &
 	ActorDatabaseConfig<DB>;
 
 // See description on `ActorConfig`
@@ -411,7 +415,8 @@ export type ActorConfigInput<
 	I,
 	AD,
 	DB,
-	R extends Actions<S, CP, CS, V, I, AD, DB>,
+	E,
+	R extends Actions<S, CP, CS, V, I, AD, DB, E>,
 > = Omit<
 	z.input<typeof ActorConfigSchema>,
 	| "actions"
@@ -431,11 +436,11 @@ export type ActorConfigInput<
 	| "createVars"
 	| "db"
 > &
-	BaseActorConfig<S, CP, CS, V, I, AD, DB, R> &
+	BaseActorConfig<S, CP, CS, V, I, AD, DB, E, R> &
 	OnAuth<CP, AD> &
-	CreateState<S, CP, CS, V, I, AD, DB> &
-	CreateConnState<S, CP, CS, V, I, AD, DB> &
-	CreateVars<S, CP, CS, V, I, AD, DB> &
+	CreateState<S, CP, CS, V, I, AD, DB, E> &
+	CreateConnState<S, CP, CS, V, I, AD, DB, E> &
+	CreateVars<S, CP, CS, V, I, AD, DB, E> &
 	ActorDatabaseConfig<DB>;
 
 // For testing type definitions:
@@ -447,10 +452,11 @@ export function test<
 	I,
 	AD,
 	DB,
-	R extends Actions<S, CP, CS, V, I, AD, DB>,
+	E,
+	R extends Actions<S, CP, CS, V, I, AD, DB, E>,
 >(
-	input: ActorConfigInput<S, CP, CS, V, I, AD, DB, R>,
-): ActorConfig<S, CP, CS, V, I, AD, DB> {
+	input: ActorConfigInput<S, CP, CS, V, I, AD, DB, E, R>,
+): ActorConfig<S, CP, CS, V, I, AD, DB, E> {
 	const config = ActorConfigSchema.parse(input) as ActorConfig<
 		S,
 		CP,
@@ -458,7 +464,8 @@ export function test<
 		V,
 		I,
 		AD,
-		DB
+		DB,
+		E
 	>;
 	return config;
 }
@@ -474,3 +481,38 @@ export const testActor = test({
 		},
 	},
 });
+
+// === NEW SINGLE GENERIC INTERFACE ===
+
+/**
+ * Interface for defining actor configuration with a single generic parameter
+ * This provides type-safe events while simplifying the generic signature
+ */
+export interface ActorConfigInterface {
+	/** State type for the actor */
+	state?: any;
+	/** Event definitions mapping event names to their argument types */
+	events?: Record<string, any[]>;
+	/** Connection parameters type */
+	connectionParams?: any;
+	/** Connection state type */
+	connectionState?: any;
+	/** Variables type */
+	variables?: any;
+	/** Input type for onCreate */
+	input?: any;
+	/** Authentication data type */
+	authData?: any;
+	/** Database type */
+	database?: any;
+}
+
+// Type extractors for the single generic interface
+export type ExtractState<T> = T extends { state: infer S } ? S : undefined;
+export type ExtractEvents<T> = T extends { events: infer E } ? E : Record<string, never>;
+export type ExtractConnectionParams<T> = T extends { connectionParams: infer CP } ? CP : undefined;
+export type ExtractConnectionState<T> = T extends { connectionState: infer CS } ? CS : undefined;
+export type ExtractVariables<T> = T extends { variables: infer V } ? V : undefined;
+export type ExtractInput<T> = T extends { input: infer I } ? I : undefined;
+export type ExtractAuthData<T> = T extends { authData: infer AD } ? AD : undefined;
+export type ExtractDatabase<T> = T extends { database: infer DB } ? DB : undefined;

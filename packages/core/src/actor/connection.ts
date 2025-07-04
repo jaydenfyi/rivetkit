@@ -17,7 +17,7 @@ export function generateConnToken(): string {
 
 export type ConnId = string;
 
-export type AnyConn = Conn<any, any, any, any, any, any, any>;
+export type AnyConn = Conn<any, any, any, any, any, any, any, any>;
 
 /**
  * Represents a client connection to a actor.
@@ -26,7 +26,7 @@ export type AnyConn = Conn<any, any, any, any, any, any, any>;
  *
  * @see {@link https://rivet.gg/docs/connections|Connection Documentation}
  */
-export class Conn<S, CP, CS, V, I, AD, DB> {
+export class Conn<S, CP, CS, V, I, AD, DB, E> {
 	subscriptions: Set<string> = new Set<string>();
 
 	#stateEnabled: boolean;

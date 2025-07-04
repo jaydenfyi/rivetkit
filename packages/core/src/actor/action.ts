@@ -13,8 +13,8 @@ import { Client } from "@/client/client";
  *
  * @typeParam A Actor this action belongs to
  */
-export class ActionContext<S, CP, CS, V, I, AD, DB> {
-	#actorContext: ActorContext<S, CP, CS, V, I, AD, DB>;
+export class ActionContext<S, CP, CS, V, I, AD, DB, E> {
+	#actorContext: ActorContext<S, CP, CS, V, I, AD, DB, E>;
 
 	/**
 	 * Should not be called directly.
@@ -23,8 +23,8 @@ export class ActionContext<S, CP, CS, V, I, AD, DB> {
 	 * @param conn - The connection associated with the action
 	 */
 	constructor(
-		actorContext: ActorContext<S, CP, CS, V, I, AD, DB>,
-		public readonly conn: Conn<S, CP, CS, V, I, AD, DB>,
+		actorContext: ActorContext<S, CP, CS, V, I, AD, DB, E>,
+		public readonly conn: Conn<S, CP, CS, V, I, AD, DB, E>,
 	) {
 		this.#actorContext = actorContext;
 	}
@@ -46,7 +46,7 @@ export class ActionContext<S, CP, CS, V, I, AD, DB> {
 	/**
 	 * Broadcasts an event to all connected clients.
 	 */
-	broadcast(name: string, ...args: any[]): void {
+	broadcast<K extends keyof E>(name: K, ...args: E[K] extends readonly unknown[] ? E[K] : never): void {
 		this.#actorContext.broadcast(name, ...args);
 	}
 
@@ -95,7 +95,7 @@ export class ActionContext<S, CP, CS, V, I, AD, DB> {
 	/**
 	 * Gets the map of connections.
 	 */
-	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, AD, DB>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, AD, DB, E>> {
 		return this.#actorContext.conns;
 	}
 
