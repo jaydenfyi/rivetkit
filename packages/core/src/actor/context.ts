@@ -9,10 +9,10 @@ import { Registry } from "@/registry/mod";
 /**
  * ActorContext class that provides access to actor methods and state
  */
-export class ActorContext<S, CP, CS, V, I, AD, DB, E> {
-	#actor: ActorInstance<S, CP, CS, V, I, AD, DB, E>;
+export class ActorContext<S, CP, CS, V, I, AD, DB> {
+	#actor: ActorInstance<S, CP, CS, V, I, AD, DB>;
 
-	constructor(actor: ActorInstance<S, CP, CS, V, I, AD, DB, E>) {
+	constructor(actor: ActorInstance<S, CP, CS, V, I, AD, DB>) {
 		this.#actor = actor;
 	}
 
@@ -35,8 +35,8 @@ export class ActorContext<S, CP, CS, V, I, AD, DB, E> {
 	 * @param name - The name of the event.
 	 * @param args - The arguments to send with the event.
 	 */
-	broadcast<K extends keyof E>(name: K, ...args: E[K] extends readonly unknown[] ? E[K] : never): void {
-		this.#actor._broadcast(name as string, ...args);
+	broadcast<Args extends Array<unknown>>(name: string, ...args: Args): void {
+		this.#actor._broadcast(name, ...args);
 		return;
 	}
 
@@ -85,7 +85,7 @@ export class ActorContext<S, CP, CS, V, I, AD, DB, E> {
 	/**
 	 * Gets the map of connections.
 	 */
-	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, AD, DB, E>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, AD, DB>> {
 		return this.#actor.conns;
 	}
 
