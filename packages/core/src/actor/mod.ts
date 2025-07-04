@@ -3,20 +3,10 @@ import {
 	type ActorConfig,
 	type ActorConfigInput,
 	ActorConfigSchema,
-	type ActorConfigInterface,
-	type ExtractState,
-	type ExtractEvents,
-	type ExtractConnectionParams,
-	type ExtractConnectionState,
-	type ExtractVariables,
-	type ExtractInput,
-	type ExtractAuthData,
-	type ExtractDatabase,
 } from "./config";
 import { ActorDefinition } from "./definition";
 
-// Internal 8-generic actor function
-export function _actor<
+export function actor<
 	S,
 	CP,
 	CS,
@@ -24,11 +14,10 @@ export function _actor<
 	I,
 	AD,
 	DB,
-	E,
-	R extends Actions<S, CP, CS, V, I, AD, DB, E>,
+	R extends Actions<S, CP, CS, V, I, AD, DB>,
 >(
-	input: ActorConfigInput<S, CP, CS, V, I, AD, DB, E, R>,
-): ActorDefinition<S, CP, CS, V, I, AD, DB, E, R> {
+	input: ActorConfigInput<S, CP, CS, V, I, AD, DB, R>,
+): ActorDefinition<S, CP, CS, V, I, AD, DB, R> {
 	const config = ActorConfigSchema.parse(input) as ActorConfig<
 		S,
 		CP,
@@ -36,57 +25,10 @@ export function _actor<
 		V,
 		I,
 		AD,
-		DB,
-		E
+		DB
 	>;
 	return new ActorDefinition(config);
 }
-
-// New single-generic public actor function
-export function actor<T extends ActorConfigInterface>(
-	input: ActorConfigInput<
-		ExtractState<T>,
-		ExtractConnectionParams<T>,
-		ExtractConnectionState<T>,
-		ExtractVariables<T>,
-		ExtractInput<T>,
-		ExtractAuthData<T>,
-		ExtractDatabase<T>,
-		ExtractEvents<T>,
-		Actions<
-			ExtractState<T>,
-			ExtractConnectionParams<T>,
-			ExtractConnectionState<T>,
-			ExtractVariables<T>,
-			ExtractInput<T>,
-			ExtractAuthData<T>,
-			ExtractDatabase<T>,
-			ExtractEvents<T>
-		>
-	>
-): ActorDefinition<
-	ExtractState<T>,
-	ExtractConnectionParams<T>,
-	ExtractConnectionState<T>,
-	ExtractVariables<T>,
-	ExtractInput<T>,
-	ExtractAuthData<T>,
-	ExtractDatabase<T>,
-	ExtractEvents<T>,
-	Actions<
-		ExtractState<T>,
-		ExtractConnectionParams<T>,
-		ExtractConnectionState<T>,
-		ExtractVariables<T>,
-		ExtractInput<T>,
-		ExtractAuthData<T>,
-		ExtractDatabase<T>,
-		ExtractEvents<T>
-	>
-> {
-	return _actor(input);
-}
-
 export type { ActorKey } from "@/manager/protocol/query";
 export type { ActorContext } from "./context";
 export { UserError, type UserErrorOptions } from "./errors";

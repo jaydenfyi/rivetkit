@@ -11,7 +11,6 @@ export type AnyActorDefinition = ActorDefinition<
 	any,
 	any,
 	any,
-	any,
 	any
 >;
 
@@ -27,10 +26,9 @@ export type ActorContextOf<AD extends AnyActorDefinition> =
 		infer I,
 		infer AD,
 		infer DB,
-		infer E,
 		any
 	>
-		? ActorContext<S, CP, CS, V, I, AD, DB, E>
+		? ActorContext<S, CP, CS, V, I, AD, DB>
 		: never;
 
 /**
@@ -45,29 +43,10 @@ export type ActionContextOf<AD extends AnyActorDefinition> =
 		infer I,
 		infer AD,
 		infer DB,
-		infer E,
 		any
 	>
-		? ActionContext<S, CP, CS, V, I, AD, DB, E>
+		? ActionContext<S, CP, CS, V, I, AD, DB>
 		: never;
-
-/**
- * Extracts the Events type from an ActorDefinition
- */
-export type ActorEventsOf<AD extends AnyActorDefinition> =
-	AD extends ActorDefinition<
-		any,
-		any,
-		any,
-		any,
-		any,
-		any,
-		any,
-		infer E,
-		any
-	>
-		? E
-		: Record<string, never>;
 
 export class ActorDefinition<
 	S,
@@ -77,20 +56,19 @@ export class ActorDefinition<
 	I,
 	AD,
 	DB,
-	E,
-	R extends Actions<S, CP, CS, V, I, AD, DB, E>,
+	R extends Actions<S, CP, CS, V, I, AD, DB>,
 > {
-	#config: ActorConfig<S, CP, CS, V, I, AD, DB, E>;
+	#config: ActorConfig<S, CP, CS, V, I, AD, DB>;
 
-	constructor(config: ActorConfig<S, CP, CS, V, I, AD, DB, E>) {
+	constructor(config: ActorConfig<S, CP, CS, V, I, AD, DB>) {
 		this.#config = config;
 	}
 
-	get config(): ActorConfig<S, CP, CS, V, I, AD, DB, E> {
+	get config(): ActorConfig<S, CP, CS, V, I, AD, DB> {
 		return this.#config;
 	}
 
-	instantiate(): ActorInstance<S, CP, CS, V, I, AD, DB, E> {
+	instantiate(): ActorInstance<S, CP, CS, V, I, AD, DB> {
 		return new ActorInstance(this.#config);
 	}
 }

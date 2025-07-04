@@ -35,10 +35,6 @@ describe("ActorDefinition", () => {
 				client: object;
 			}
 
-			interface TestEvents {
-				testEvent: [string, number];
-			}
-
 			// For testing type utilities, we don't need a real actor instance
 			// We just need a properly typed ActorDefinition to check against
 			type TestActions = Record<never, never>;
@@ -50,7 +46,6 @@ describe("ActorDefinition", () => {
 				TestInput,
 				TestAuthData,
 				TestDatabase,
-				TestEvents,
 				TestActions
 			>;
 
@@ -63,8 +58,7 @@ describe("ActorDefinition", () => {
 					TestVars,
 					TestInput,
 					TestAuthData,
-					TestDatabase,
-					TestEvents
+					TestDatabase
 				>
 			>();
 
@@ -81,8 +75,7 @@ describe("ActorDefinition", () => {
 					TestVars,
 					TestInput,
 					TestAuthData,
-					TestDatabase,
-					TestEvents
+					TestDatabase
 				>
 			>();
 		});
