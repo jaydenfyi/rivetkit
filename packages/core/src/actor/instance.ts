@@ -218,6 +218,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB, E> {
 						undefined,
 						undefined,
 						undefined,
+						undefined,
 						undefined
 					>,
 					this.#actorDriver.getContext(this.#actorId),
@@ -571,22 +572,19 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB, E> {
 				logger().info("actor state initializing");
 
 				if ("createState" in this.#config) {
-					this.#config.createState;
-
-					// Convert state to undefined since state is not defined yet here
-									stateData = await this.#config.createState(
-					this.actorContext as unknown as ActorContext<
-						undefined,
-						undefined,
-						undefined,
-						undefined,
-						undefined,
-						undefined,
-						undefined,
-						undefined
-					>,
-					{ input: persistData.i },
-				);
+					stateData = await this.#config.createState(
+						this.actorContext as unknown as ActorContext<
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							undefined,
+							undefined
+						>,
+						{ input: persistData.i },
+					);
 				} else if ("state" in this.#config) {
 					stateData = structuredClone(this.#config.state);
 				} else {

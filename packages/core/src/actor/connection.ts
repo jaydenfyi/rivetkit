@@ -32,7 +32,7 @@ export class Conn<S, CP, CS, V, I, AD, DB, E> {
 	#stateEnabled: boolean;
 
 	// TODO: Remove this cyclical reference
-	#actor: ActorInstance<S, CP, CS, V, I, AD, DB>;
+	#actor: ActorInstance<S, CP, CS, V, I, AD, DB, E>;
 
 	/**
 	 * The proxied state that notifies of changes automatically.
@@ -103,7 +103,7 @@ export class Conn<S, CP, CS, V, I, AD, DB, E> {
 	 * @protected
 	 */
 	public constructor(
-		actor: ActorInstance<S, CP, CS, V, I, AD, DB>,
+		actor: ActorInstance<S, CP, CS, V, I, AD, DB, E>,
 		persist: PersistedConn<CP, CS>,
 		driver: ConnDriver,
 		stateEnabled: boolean,

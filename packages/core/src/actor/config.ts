@@ -470,7 +470,19 @@ export function test<
 	return config;
 }
 
-export const testActor = test({
+export const testActor = test<
+	{ count: number },           // S - State
+	undefined,                   // CP - Connection Params
+	undefined,                   // CS - Connection State  
+	undefined,                   // V - Variables
+	undefined,                   // I - Input
+	undefined,                   // AD - Auth Data
+	undefined,                   // DB - Database
+	{ newCount: [number] },      // E - Events
+	{                            // R - Actions
+		increment: (c: any, x: number) => number;
+	}
+>({
 	state: { count: 0 },
 	// createState: () => ({ count: 0 }),
 	actions: {

@@ -67,28 +67,30 @@ export async function parseMessage(
 	return message;
 }
 
-export interface ProcessMessageHandler<S, CP, CS, V, I, AD, DB> {
-	onExecuteAction?: (
-		ctx: ActionContext<S, CP, CS, V, I, AD, DB>,
+export interface MessageHandlers<S, CP, CS, V, I, AD, DB, E> {
+	onExecuteAction: (
+		ctx: ActionContext<S, CP, CS, V, I, AD, DB, E>,
 		name: string,
 		args: unknown[],
 	) => Promise<unknown>;
-	onSubscribe?: (
+	onSubscribe: (
 		eventName: string,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		conn: Conn<S, CP, CS, V, I, AD, DB, E>,
 	) => Promise<void>;
-	onUnsubscribe?: (
+	onUnsubscribe: (
 		eventName: string,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		conn: Conn<S, CP, CS, V, I, AD, DB, E>,
 	) => Promise<void>;
 }
 
-export async function processMessage<S, CP, CS, V, I, AD, DB>(
+export async function processMessage<S, CP, CS, V, I, AD, DB, E>(
 	message: wsToServer.ToServer,
-	actor: ActorInstance<S, CP, CS, V, I, AD, DB>,
-	conn: Conn<S, CP, CS, V, I, AD, DB>,
-	handler: ProcessMessageHandler<S, CP, CS, V, I, AD, DB>,
+	actor: ActorInstance<S, CP, CS, V, I, AD, DB, E>,
+	conn: Conn<S, CP, CS, V, I, AD, DB, E>,
+	handlers: MessageHandlers<S, CP, CS, V, I, AD, DB, E>,
 ) {
+	logger().trace("processing message", { message });
+
 	let actionId: number | undefined;
 	let actionName: string | undefined;
 
@@ -96,7 +98,7 @@ export async function processMessage<S, CP, CS, V, I, AD, DB>(
 		if ("ar" in message.b) {
 			// Action request
 
-			if (handler.onExecuteAction === undefined) {
+			if (handlers.onExecuteAction === undefined) {
 				throw new errors.Unsupported("Action");
 			}
 
@@ -111,14 +113,14 @@ export async function processMessage<S, CP, CS, V, I, AD, DB>(
 				argsCount: args.length,
 			});
 
-			const ctx = new ActionContext<S, CP, CS, V, I, AD, DB>(
+			const ctx = new ActionContext<S, CP, CS, V, I, AD, DB, E>(
 				actor.actorContext,
 				conn,
 			);
 
 			// Process the action request and wait for the result
 			// This will wait for async actions to complete
-			const output = await handler.onExecuteAction(ctx, name, args);
+			const output = await handlers.onExecuteAction(ctx, name, args);
 
 			logger().debug("sending action response", {
 				id,
@@ -144,8 +146,8 @@ export async function processMessage<S, CP, CS, V, I, AD, DB>(
 			// Subscription request
 
 			if (
-				handler.onSubscribe === undefined ||
-				handler.onUnsubscribe === undefined
+				handlers.onSubscribe === undefined ||
+				handlers.onUnsubscribe === undefined
 			) {
 				throw new errors.Unsupported("Subscriptions");
 			}
@@ -157,9 +159,9 @@ export async function processMessage<S, CP, CS, V, I, AD, DB>(
 			});
 
 			if (subscribe) {
-				await handler.onSubscribe(eventName, conn);
+				await handlers.onSubscribe(eventName, conn);
 			} else {
-				await handler.onUnsubscribe(eventName, conn);
+				await handlers.onUnsubscribe(eventName, conn);
 			}
 
 			logger().debug("subscription request completed", {
