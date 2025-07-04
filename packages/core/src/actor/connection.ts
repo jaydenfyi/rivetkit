@@ -17,7 +17,7 @@ export function generateConnToken(): string {
 
 export type ConnId = string;
 
-export type AnyConn = Conn<any, any, any, any, any, any, any>;
+export type AnyConn = Conn<any, any, any, any, any, any, any, any>;
 
 /**
  * Represents a client connection to a actor.
@@ -26,13 +26,13 @@ export type AnyConn = Conn<any, any, any, any, any, any, any>;
  *
  * @see {@link https://rivet.gg/docs/connections|Connection Documentation}
  */
-export class Conn<S, CP, CS, V, I, AD, DB> {
+export class Conn<S, CP, CS, V, I, AD, DB, E> {
 	subscriptions: Set<string> = new Set<string>();
 
 	#stateEnabled: boolean;
 
 	// TODO: Remove this cyclical reference
-	#actor: ActorInstance<S, CP, CS, V, I, AD, DB>;
+	#actor: ActorInstance<S, CP, CS, V, I, AD, DB, E>;
 
 	/**
 	 * The proxied state that notifies of changes automatically.
@@ -103,7 +103,7 @@ export class Conn<S, CP, CS, V, I, AD, DB> {
 	 * @protected
 	 */
 	public constructor(
-		actor: ActorInstance<S, CP, CS, V, I, AD, DB>,
+		actor: ActorInstance<S, CP, CS, V, I, AD, DB, E>,
 		persist: PersistedConn<CP, CS>,
 		driver: ConnDriver,
 		stateEnabled: boolean,

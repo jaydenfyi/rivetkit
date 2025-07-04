@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const ActorsSchema = z.record(
 	z.string(),
-	z.custom<ActorDefinition<any, any, any, any, any, any, any, any>>(),
+	z.custom<ActorDefinition<any, any, any, any, any, any, any, any, any>>(),
 );
 export type RegistryActors = z.infer<typeof ActorsSchema>;
 

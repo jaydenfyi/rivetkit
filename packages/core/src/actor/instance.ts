@@ -51,12 +51,16 @@ export type AnyActorInstance = ActorInstance<
 	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
 	any,
 	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
+	any,
+	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
 	any
 >;
 
 export type ExtractActorState<A extends AnyActorInstance> =
 	A extends ActorInstance<
 		infer State,
+		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
+		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
@@ -87,6 +91,8 @@ export type ExtractActorConnParams<A extends AnyActorInstance> =
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
+		any,
+		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any
 	>
 		? ConnParams
@@ -106,14 +112,16 @@ export type ExtractActorConnState<A extends AnyActorInstance> =
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
+		any,
+		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any
 	>
 		? ConnState
 		: never;
 
-export class ActorInstance<S, CP, CS, V, I, AD, DB> {
+export class ActorInstance<S, CP, CS, V, I, AD, DB, E> {
 	// Shared actor context for this instance
-	actorContext: ActorContext<S, CP, CS, V, I, AD, DB>;
+	actorContext: ActorContext<S, CP, CS, V, I, AD, DB, E>;
 	isStopping = false;
 
 	#persistChanged = false;
@@ -136,7 +144,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	#vars?: V;
 
 	#backgroundPromises: Promise<void>[] = [];
-	#config: ActorConfig<S, CP, CS, V, I, AD, DB>;
+	#config: ActorConfig<S, CP, CS, V, I, AD, DB, E>;
 	#connectionDrivers!: ConnDrivers;
 	#actorDriver!: ActorDriver;
 	#inlineClient!: Client<Registry<any>>;
@@ -146,8 +154,8 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	#region!: string;
 	#ready = false;
 
-	#connections = new Map<ConnId, Conn<S, CP, CS, V, I, AD, DB>>();
-	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS, V, I, AD, DB>>>();
+	#connections = new Map<ConnId, Conn<S, CP, CS, V, I, AD, DB, E>>();
+	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS, V, I, AD, DB, E>>>();
 
 	#schedule!: Schedule;
 
@@ -169,7 +177,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	 *
 	 * @private
 	 */
-	constructor(config: ActorConfig<S, CP, CS, V, I, AD, DB>) {
+	constructor(config: ActorConfig<S, CP, CS, V, I, AD, DB, E>) {
 		this.#config = config;
 		this.actorContext = new ActorContext(this);
 	}
@@ -204,6 +212,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 			if ("createVars" in this.#config) {
 				const dataOrPromise = this.#config.createVars(
 					this.actorContext as unknown as ActorContext<
+						undefined,
 						undefined,
 						undefined,
 						undefined,
@@ -541,7 +550,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 			for (const connPersist of this.#persist.c) {
 				// Create connections
 				const driver = this.__getConnDriver(connPersist.d);
-				const conn = new Conn<S, CP, CS, V, I, AD, DB>(
+				const conn = new Conn<S, CP, CS, V, I, AD, DB, E>(
 					this,
 					connPersist,
 					driver,
@@ -563,11 +572,9 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 				logger().info("actor state initializing");
 
 				if ("createState" in this.#config) {
-					this.#config.createState;
-
-					// Convert state to undefined since state is not defined yet here
 					stateData = await this.#config.createState(
 						this.actorContext as unknown as ActorContext<
+							undefined,
 							undefined,
 							undefined,
 							undefined,
@@ -609,14 +616,14 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 		}
 	}
 
-	__getConnForId(id: string): Conn<S, CP, CS, V, I, AD, DB> | undefined {
+	__getConnForId(id: string): Conn<S, CP, CS, V, I, AD, DB, E> | undefined {
 		return this.#connections.get(id);
 	}
 
 	/**
 	 * Removes a connection and cleans up its resources.
 	 */
-	__removeConn(conn: Conn<S, CP, CS, V, I, AD, DB> | undefined) {
+	__removeConn(conn: Conn<S, CP, CS, V, I, AD, DB, E> | undefined) {
 		if (!conn) {
 			logger().warn("`conn` does not exist");
 			return;
@@ -691,6 +698,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 						undefined,
 						undefined,
 						undefined,
+						undefined,
 						undefined
 					>,
 					onBeforeConnectOpts,
@@ -733,7 +741,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 		driverId: string,
 		driverState: unknown,
 		authData: unknown,
-	): Promise<Conn<S, CP, CS, V, I, AD, DB>> {
+	): Promise<Conn<S, CP, CS, V, I, AD, DB, E>> {
 		if (this.#connections.has(connectionId)) {
 			throw new Error(`Connection already exists: ${connectionId}`);
 		}
@@ -750,7 +758,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 			a: authData,
 			su: [],
 		};
-		const conn = new Conn<S, CP, CS, V, I, AD, DB>(
+		const conn = new Conn<S, CP, CS, V, I, AD, DB, E>(
 			this,
 			persist,
 			driver,
@@ -806,7 +814,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	// MARK: Messages
 	async processMessage(
 		message: wsToServer.ToServer,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		conn: Conn<S, CP, CS, V, I, AD, DB, E>,
 	) {
 		await processMessage(message, this, conn, {
 			onExecuteAction: async (ctx, name, args) => {
@@ -824,7 +832,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	// MARK: Events
 	#addSubscription(
 		eventName: string,
-		connection: Conn<S, CP, CS, V, I, AD, DB>,
+		connection: Conn<S, CP, CS, V, I, AD, DB, E>,
 		fromPersist: boolean,
 	) {
 		if (connection.subscriptions.has(eventName)) {
@@ -854,7 +862,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 
 	#removeSubscription(
 		eventName: string,
-		connection: Conn<S, CP, CS, V, I, AD, DB>,
+		connection: Conn<S, CP, CS, V, I, AD, DB, E>,
 		fromRemoveConn: boolean,
 	) {
 		if (!connection.subscriptions.has(eventName)) {
@@ -913,7 +921,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	 * @internal
 	 */
 	async executeAction(
-		ctx: ActionContext<S, CP, CS, V, I, AD, DB>,
+		ctx: ActionContext<S, CP, CS, V, I, AD, DB, E>,
 		actionName: string,
 		args: unknown[],
 	): Promise<unknown> {
@@ -1056,7 +1064,7 @@ export class ActorInstance<S, CP, CS, V, I, AD, DB> {
 	/**
 	 * Gets the map of connections.
 	 */
-	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, AD, DB>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, AD, DB, E>> {
 		return this.#connections;
 	}
 

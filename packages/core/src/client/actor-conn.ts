@@ -1,4 +1,4 @@
-import type { AnyActorDefinition } from "@/actor/definition";
+import type { AnyActorDefinition, ActorEventsOf } from "@/actor/definition";
 import type * as wsToClient from "@/actor/protocol/message/to-client";
 import type * as wsToServer from "@/actor/protocol/message/to-server";
 import type { Encoding } from "@/actor/protocol/serde";
@@ -784,6 +784,37 @@ enc
 }
 
 /**
+ * Type-safe event methods for ActorConn based on actor's event definitions
+ */
+export interface TypeSafeEventMethods<E extends Record<string, unknown[]>> {
+	/**
+	 * Subscribes to an event that will happen repeatedly with type safety.
+	 *
+	 * @template K - The event name (must be a key of the actor's events)
+	 * @param {K} eventName - The name of the event to subscribe to.
+	 * @param {(...args: E[K]) => void} callback - The callback function with typed arguments.
+	 * @returns {EventUnsubscribe} - A function to unsubscribe from the event.
+	 */
+	on<K extends keyof E>(
+		eventName: K,
+		callback: (...args: E[K] extends readonly unknown[] ? E[K] : never) => void,
+	): EventUnsubscribe;
+
+	/**
+	 * Subscribes to an event that will be triggered only once with type safety.
+	 *
+	 * @template K - The event name (must be a key of the actor's events)
+	 * @param {K} eventName - The name of the event to subscribe to.
+	 * @param {(...args: E[K]) => void} callback - The callback function with typed arguments.
+	 * @returns {EventUnsubscribe} - A function to unsubscribe from the event.
+	 */
+	once<K extends keyof E>(
+		eventName: K,
+		callback: (...args: E[K] extends readonly unknown[] ? E[K] : never) => void,
+	): EventUnsubscribe;
+}
+
+/**
  * Connection to a actor. Allows calling actor's remote procedure calls with inferred types. See {@link ActorConnRaw} for underlying methods.
  *
  * @example
@@ -791,6 +822,12 @@ enc
  * const room = client.connect<ChatRoom>(...etc...);
  * // This calls the action named `sendMessage` on the `ChatRoom` actor.
  * await room.sendMessage('Hello, world!');
+ * 
+ * // Type-safe event subscription
+ * room.on("newMessage", (message) => {
+ *   // message is properly typed based on ChatRoom's event definitions
+ *   console.log(message.content);
+ * });
  * ```
  *
  * Private methods (e.g. those starting with `_`) are automatically excluded.
@@ -799,4 +836,5 @@ enc
  * @see {@link ActorConnRaw}
  */
 export type ActorConn<AD extends AnyActorDefinition> = ActorConnRaw &
-	ActorDefinitionActions<AD>;
+	ActorDefinitionActions<AD> &
+	TypeSafeEventMethods<ActorEventsOf<AD>>;
