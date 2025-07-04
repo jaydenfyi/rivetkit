@@ -158,7 +158,7 @@ export function runActorHandleTests(driverTestConfig: DriverTestConfig) {
 				// (onStart should only be called once when the actor is first created)
 				const events = await sameHandle.getEvents();
 				expect(events).toContain("onStart");
-				expect(events.filter((e) => e === "onStart").length).toBe(1);
+				expect(events.filter((e: any) => e === "onStart").length).toBe(1);
 			});
 
 			test("should trigger lifecycle hooks for each Action call", async (c) => {
@@ -195,13 +195,13 @@ export function runActorHandleTests(driverTestConfig: DriverTestConfig) {
 
 				// Each should have count 1
 				expect(
-					eventsAfterAction.filter((e) => e === "onBeforeConnect").length,
+					eventsAfterAction.filter((e: any) => e === "onBeforeConnect").length,
 				).toBe(1);
-				expect(eventsAfterAction.filter((e) => e === "onConnect").length).toBe(
+				expect(eventsAfterAction.filter((e: any) => e === "onConnect").length).toBe(
 					1,
 				);
 				expect(
-					eventsAfterAction.filter((e) => e === "onDisconnect").length,
+					eventsAfterAction.filter((e: any) => e === "onDisconnect").length,
 				).toBe(1);
 
 				// Make another Action call
@@ -212,13 +212,13 @@ export function runActorHandleTests(driverTestConfig: DriverTestConfig) {
 
 				// Each hook should now have count 2
 				expect(
-					eventsAfterSecondAction.filter((e) => e === "onBeforeConnect").length,
+					eventsAfterSecondAction.filter((e: any) => e === "onBeforeConnect").length,
 				).toBe(2);
 				expect(
-					eventsAfterSecondAction.filter((e) => e === "onConnect").length,
+					eventsAfterSecondAction.filter((e: any) => e === "onConnect").length,
 				).toBe(2);
 				expect(
-					eventsAfterSecondAction.filter((e) => e === "onDisconnect").length,
+					eventsAfterSecondAction.filter((e: any) => e === "onDisconnect").length,
 				).toBe(2);
 			});
 
@@ -249,10 +249,10 @@ export function runActorHandleTests(driverTestConfig: DriverTestConfig) {
 				const events = await viewHandle.getEvents();
 
 				// Should have 1 onStart, 2 each of onBeforeConnect, onConnect, and onDisconnect
-				expect(events.filter((e) => e === "onStart").length).toBe(1);
-				expect(events.filter((e) => e === "onBeforeConnect").length).toBe(2);
-				expect(events.filter((e) => e === "onConnect").length).toBe(2);
-				expect(events.filter((e) => e === "onDisconnect").length).toBe(2);
+				expect(events.filter((e: any) => e === "onStart").length).toBe(1);
+				expect(events.filter((e: any) => e === "onBeforeConnect").length).toBe(2);
+				expect(events.filter((e: any) => e === "onConnect").length).toBe(2);
+				expect(events.filter((e: any) => e === "onDisconnect").length).toBe(2);
 			});
 		});
 	});

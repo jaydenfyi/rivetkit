@@ -42,7 +42,28 @@ export function _actor<
 	return new ActorDefinition(config);
 }
 
-// New single-generic public actor function
+// Compatibility layer - overloaded actor function
+
+/**
+ * Creates an actor with type-safe events using a single generic interface.
+ * 
+ * @example
+ * ```typescript
+ * const counter = actor<{
+ *   events: { newCount: [number]; reset: [] };
+ *   state: { count: number };
+ * }>({
+ *   state: { count: 0 },
+ *   actions: {
+ *     increment: (c, x: number) => {
+ *       c.state.count += x;
+ *       c.broadcast("newCount", c.state.count); // ✅ Type-safe!
+ *       return c.state.count;
+ *     },
+ *   },
+ * });
+ * ```
+ */
 export function actor<T extends ActorConfigInterface>(
 	input: ActorConfigInput<
 		ExtractState<T>,
@@ -63,7 +84,7 @@ export function actor<T extends ActorConfigInterface>(
 			ExtractDatabase<T>,
 			ExtractEvents<T>
 		>
-	>
+	>,
 ): ActorDefinition<
 	ExtractState<T>,
 	ExtractConnectionParams<T>,
@@ -83,8 +104,36 @@ export function actor<T extends ActorConfigInterface>(
 		ExtractDatabase<T>,
 		ExtractEvents<T>
 	>
-> {
-	return _actor(input);
+>;
+
+/**
+ * Creates an actor with legacy API support (backward compatibility).
+ * Events will not be type-safe with this usage pattern.
+ * 
+ * @example
+ * ```typescript
+ * const counter = actor({
+ *   state: { count: 0 },
+ *   actions: {
+ *     increment: (c, x: number) => {
+ *       c.state.count += x;
+ *       c.broadcast("newCount", c.state.count); // Works but not type-safe
+ *       return c.state.count;
+ *     },
+ *   },
+ * });
+ * ```
+ */
+export function actor<R extends Actions<any, any, any, any, any, any, any, Record<string, any[]>>>(
+	input: ActorConfigInput<any, any, any, any, any, any, any, Record<string, any[]>, R>,
+): ActorDefinition<any, any, any, any, any, any, any, Record<string, any[]>, R>;
+
+// Implementation
+export function actor<T extends ActorConfigInterface | undefined = undefined>(
+	input: any,
+): any {
+	// For legacy usage (no generics), use internal function with any types
+	return _actor<any, any, any, any, any, any, any, Record<string, any[]>, any>(input);
 }
 
 export type { ActorKey } from "@/manager/protocol/query";

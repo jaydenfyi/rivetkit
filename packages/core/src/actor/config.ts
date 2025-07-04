@@ -519,12 +519,31 @@ export interface ActorConfigInterface {
 	database?: any;
 }
 
-// Type extractors for the single generic interface
-export type ExtractState<T> = T extends { state: infer S } ? S : undefined;
-export type ExtractEvents<T> = T extends { events: infer E } ? E : Record<string, never>;
-export type ExtractConnectionParams<T> = T extends { connectionParams: infer CP } ? CP : undefined;
-export type ExtractConnectionState<T> = T extends { connectionState: infer CS } ? CS : undefined;
-export type ExtractVariables<T> = T extends { variables: infer V } ? V : undefined;
-export type ExtractInput<T> = T extends { input: infer I } ? I : undefined;
-export type ExtractAuthData<T> = T extends { authData: infer AD } ? AD : undefined;
-export type ExtractDatabase<T> = T extends { database: infer DB } ? DB : undefined;
+/**
+ * Type extractors for the single generic interface style
+ * These work when T is an interface like { state: {...}, events: {...} }
+ */
+
+// Extract State from interface
+export type ExtractState<T> = T extends { state: infer S } ? S : any;
+
+// Extract Events from interface 
+export type ExtractEvents<T> = T extends { events: infer E } ? E : Record<string, any[]>;
+
+// Extract Connection Params from interface
+export type ExtractConnectionParams<T> = T extends { connectionParams: infer CP } ? CP : any;
+
+// Extract Connection State from interface
+export type ExtractConnectionState<T> = T extends { connectionState: infer CS } ? CS : any;
+
+// Extract Variables from interface
+export type ExtractVariables<T> = T extends { variables: infer V } ? V : any;
+
+// Extract Input from interface
+export type ExtractInput<T> = T extends { input: infer I } ? I : any;
+
+// Extract Auth Data from interface
+export type ExtractAuthData<T> = T extends { authData: infer AD } ? AD : any;
+
+// Extract Database from interface
+export type ExtractDatabase<T> = T extends { database: infer DB } ? DB : any;

@@ -126,7 +126,7 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 				expect(allStates.length).toBeGreaterThanOrEqual(2);
 
 				// IDs should be unique
-				const ids = allStates.map((state) => state.id);
+				const ids = allStates.map((state: any) => state.id);
 				const uniqueIds = [...new Set(ids)];
 				expect(uniqueIds.length).toBe(ids.length);
 
