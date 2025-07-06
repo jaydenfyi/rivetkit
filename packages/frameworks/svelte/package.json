@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "@rivetkit/framework-base": "workspace:*",
-    "@tanstack/store": "^0.7.1"
+    "@tanstack/store": "^0.7.1",
+    "@tanstack/svelte-store": "^0.7.1"
   },
   "peerDependencies": {
     "svelte": "^5.0.0",

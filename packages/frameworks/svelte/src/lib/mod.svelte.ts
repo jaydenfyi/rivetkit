@@ -1,13 +1,12 @@
 // Requires Svelte 5 and runes enabled
+import { useStore } from "@tanstack/svelte-store";
 import {
-  type AnyActorRegistry,
-  type CreateRivetKitOptions,
-  type ActorOptions,
-  createRivetKit as createVanillaRivetKit,
+    type AnyActorRegistry,
+    type CreateRivetKitOptions,
+    type ActorOptions,
+    createRivetKit as createVanillaRivetKit,
 } from "@rivetkit/framework-base";
 import type { Client, ExtractActorsFromRegistry } from "@rivetkit/core/client";
-import { createClient } from "@rivetkit/core/client";
-import { Registry } from "@rivetkit/core";
 
 export { createClient } from "@rivetkit/core/client";
 
@@ -17,84 +16,99 @@ export { createClient } from "@rivetkit/core/client";
  * @param opts - Optional configuration
  */
 export function createRivetKit<Registry extends AnyActorRegistry>(
-  client: Client<Registry>,
-  opts: CreateRivetKitOptions<Registry> = {}
+    client: Client<Registry>,
+    opts: CreateRivetKitOptions<Registry> = {}
 ) {
-  const { getOrCreateActor } = createVanillaRivetKit<
-    Registry,
-    ExtractActorsFromRegistry<Registry>,
-    keyof ExtractActorsFromRegistry<Registry>
-  >(client, opts);
-
-  /**
-   * Svelte 5 idiomatic hook to connect to an actor and retrieve its state reactively.
-   * Returns a $state store for the actor, and a useEvent function for event subscriptions.
-   * @param opts - Options for the actor, including its name, key, and parameters.
-   */
-  function useActor<ActorName extends keyof ExtractActorsFromRegistry<Registry>>(
-    opts: ActorOptions<Registry, ActorName>
-  ) {
-    const { mount, setState, state } = getOrCreateActor<ActorName>(opts);
-
-    // Svelte 5: reactive state from TanStack store
-    let actorState = $state<Record<string, any>>({});
-    
-    // Subscribe to TanStack store changes
-    $effect(() => {
-      return state.subscribe((newState) => {
-        // Replace the entire state object rather than mutating
-        actorState = newState || {};
-      });
-    });
-
-    // Update actor options when props change
-    $effect(() => {
-      setState((prev) => {
-        prev.opts = {
-          ...opts,
-          enabled: opts.enabled ?? true,
-        };
-        return prev;
-      });
-    });
-
-    // Mount the actor and handle cleanup
-    $effect(() => {
-      return mount();
-    });
+    const { getOrCreateActor } = createVanillaRivetKit<
+        Registry,
+        ExtractActorsFromRegistry<Registry>,
+        keyof ExtractActorsFromRegistry<Registry>
+    >(client, opts);
 
     /**
-     * Svelte 5 idiomatic event subscription for actor events.
-     * @param eventName - The event to listen for
-     * @param handler - The handler function
+     * Hook to connect to a actor and retrieve its state. Using this hook with the same options
+     * will return the same actor instance. This simplifies passing around the actor state in your components.
+     * It also provides a method to listen for events emitted by the actor.
+     * @param opts - Options for the actor, including its name, key, and parameters.
+     * @returns An object containing the actor's state and a method to listen for events.
      */
-    function useEvent(
-      eventName: string,
-      handler: (...args: any[]) => void
+    function useActor<ActorName extends keyof ExtractActorsFromRegistry<Registry>>(
+        opts: ActorOptions<Registry, ActorName>
     ) {
-      $effect(() => {
-        if (!actorState?.connection) return;
-        const connection = actorState.connection;
-        return connection.on(eventName, handler);
-      });
+        const { mount, setState, state } = getOrCreateActor<ActorName>(opts);
+        $effect(() => {
+            setState((prev) => {
+                prev.opts = {
+                    ...opts,
+                    enabled: opts.enabled ?? true,
+                };
+
+                return prev;
+            });
+        });
+
+        // Mount the actor and handle cleanup
+        $effect.pre(() => {
+            return mount();
+        });
+
+        // Use TanStack Svelte store to get reactive state
+        const actorState = useStore(state) || {};
+
+        /**
+         * Hook to listen for events emitted by the actor.
+         * This hook allows you to subscribe to specific events emitted by the actor and execute a handler function
+         * when the event occurs.
+         * It uses the `$effect` rune to set up the event listener when the actor connection is established.
+         * It cleans up the listener when the component unmounts or when the actor connection changes.
+         * @param eventName The name of the event to listen for.
+         * @param handler The function to call when the event is emitted.
+         */
+        const useEvent = (
+            eventName: string,
+            handler: (...args: any[]) => void
+        ) => {
+            $effect(() => {
+                // track dependency so that the effect is re-run when the actor connection changes
+                actorState.current?.isConnected;
+
+                if (!actorState.current.connection) return;
+                return actorState.current.connection.on(eventName, handler);
+            });
+        };
+
+        return {
+            get hash() {
+                return actorState.current.hash;
+            },
+            get handle() {
+                return actorState.current.handle;
+            },
+            get connection() {
+                return actorState.current.connection;
+            },
+            get isConnected() {
+                return actorState.current.isConnected;
+            },
+            get isConnecting() {
+                return actorState.current.isConnecting;
+            },
+            get isError() {
+                return actorState.current.isError;
+            },
+            get error() {
+                return actorState.current.error;
+            },
+            get opts() {
+                return actorState.current.opts;
+            },
+            useEvent,
+        } satisfies typeof actorState.current & {
+            useEvent: typeof useEvent;
+        }
     }
 
     return {
-      ...actorState,
-      useEvent,
+        useActor,
     };
-  }
-
-  return {
-    useActor,
-  };
 }
-
-const { useActor } = createRivetKit(createClient<AnyActorRegistry>("http://localhost:3000"));
-
-const { state, useEvent } = useActor({
-  name: "my-actor",
-  key: "my-key",
-});
-
-$inspect(state);
